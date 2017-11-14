@@ -13,22 +13,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".Presentation.Quiz.QuizSectionActivity"
-                    android:screenOrientation="portrait">
+        <activity android:name="com.example.aki.javaq.Presentation.FeedActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Presentation.Quiz.QuizResultActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Quiz.QuizActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Progress.ProgressActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.FeedListActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.AddCommentActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.AddPostActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.DetailActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Setting.SettingListActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.UserRegistrationActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.example.aki.javaq.Presentation.AddCommentActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.example.aki.javaq.Presentation.AddPostActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.example.aki.javaq.Presentation.DetailActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.example.aki.javaq.Presentation.UserRegistrationActivity" android:screenOrientation="portrait"/>
     </application>
-
 </manifest>

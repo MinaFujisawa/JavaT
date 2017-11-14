@@ -14,11 +14,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -31,8 +29,8 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.aki.javaq.Domain.Entity.User;
 import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
-import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.Domain.Helper.PictureUtils;
+import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -55,30 +53,19 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class UserRegistrationActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private ViewTreeObserver.OnGlobalLayoutListener mGlobalLayoutListener;
-    private View mParentLayout;
     private CircleImageView mMyIconImageView;
     private TextView mEditIconTextView;
-    private EditText mAddUserNameTextView;
+    private EditText mUserNameTextView;
     private TextView mErrorTextView;
     private MenuItem mSaveButton;
     private String mPicturePath;
-    private String mPictureUri;
     private String mUserName;
-    private int mIconViewWith;
-    private int mIconViewHeight;
     private boolean mTappable;
     private FirebaseUser mCurrentUser;
-    private FirebaseAuth mFirebaseAuth;
     private DatabaseReference mDatabaseReference;
     private StorageReference mUserPicReference;
-    private FirebaseAuth.AuthStateListener mAuthListener;
-    private boolean isFromSignIn = false;
-    //    public static final int DEFAULT_MSG_LENGTH_LIMIT = 20;
     public static final int RESULT_LOAD_IMAGE = 1;
     private final int REQUEST_PERMISSION_PHONE_STATE = 1;
-    public static final String NEW_USER = "new_user";
-    public static final String TAG = "tag";
 
 
     @Override
@@ -86,50 +73,47 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_registration_activity);
 
-        Intent i = getIntent();
-        isFromSignIn = i.getBooleanExtra(NEW_USER, false);
+        this.setTitle("Profile");
 
-        //Toolbar
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_with_button);
-        setSupportActionBar(myToolbar);
-        if (!isFromSignIn) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        } else {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        }
 
-        mDatabaseReference = Firebase.getFirebaseDatabaseReference();
+        mDatabaseReference = Firebase.getDatabaseRef();
         mUserPicReference = Firebase.getStorageReference();
 
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // User is signed in
-                    mCurrentUser = Firebase.getFirebaseUser();
-                    setView();
-                } else {
-                    mAddUserNameTextView.setText("");
-                }
-            }
-        };
-        Firebase.getFirebaseAuth().addAuthStateListener(mAuthListener);
-
-
+        // Setup views
         mMyIconImageView = (CircleImageView) findViewById(R.id.add_user_icon);
-        updatePhotoView();
         mMyIconImageView.setOnClickListener(this);
 
         mEditIconTextView = (TextView) findViewById(R.id.add_icon_text);
         mEditIconTextView.setOnClickListener(this);
 
-        mAddUserNameTextView = (EditText) findViewById(R.id.add_user_name);
-        mAddUserNameTextView.setInputType(InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
-//        InputFilter[] inputFilter = new InputFilter[1];
-//        inputFilter[0] = new InputFilter.LengthFilter(DEFAULT_MSG_LENGTH_LIMIT);
-//        mAddUserNameTextView.setFilters(inputFilter);
-        mAddUserNameTextView.addTextChangedListener(new TextWatcher() {
+        mUserNameTextView = (EditText) findViewById(R.id.add_user_name);
+        mUserNameTextView.setInputType(InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
+
+        mErrorTextView = (TextView) findViewById(R.id.error_text);
+
+
+        mCurrentUser = FirebaseAuth.getInstance().getCurrentUser();
+        mDatabaseReference.child(FirebaseNodes.USER_CHILD)
+                .child(mCurrentUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    setExistInfo();
+                }
+                else {
+                    mUserNameTextView.setText("");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError firebaseError) { }
+        });
+
+        updatePhotoView();
+
+
+        // Check username length
+        mUserNameTextView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -157,35 +141,22 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
             public void afterTextChanged(Editable s) {
             }
         });
-
-        mErrorTextView = (TextView) findViewById(R.id.error_text);
-
-        mParentLayout = getWindow().getDecorView().getRootView();
-        mGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                mIconViewWith = mMyIconImageView.getWidth();
-                mIconViewHeight = mMyIconImageView.getHeight();
-                removeOnGlobalLayoutListener(mParentLayout.getViewTreeObserver(), mGlobalLayoutListener);
-            }
-        };
-        mParentLayout.getViewTreeObserver().addOnGlobalLayoutListener(mGlobalLayoutListener);
-
     }
 
-    private void setView() {
-        mDatabaseReference.child(FirebaseNodes.User.USER_CHILD)
+    private void setExistInfo() {
+        mDatabaseReference.child(FirebaseNodes.USER_CHILD)
                 .child(mCurrentUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
 
+                User mUser = snapshot.getValue(User.class);
+
                 //Display User name
-                mUserName = snapshot.child(FirebaseNodes.User.USER_NAME).getValue().toString();
-                mAddUserNameTextView.setText(mUserName);
+                mUserNameTextView.setText(mUser.getUserName());
 
                 //Display User picture
-                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
-                rootRef.child(mCurrentUser.getUid()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.USER_PIC_CHILD);
+                rootRef.child(mUser.getUserId()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
                         //If there's a picture in the storage, set the picture
@@ -243,9 +214,6 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
             case REQUEST_PERMISSION_PHONE_STATE:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "Permission Granted!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
                 }
         }
     }
@@ -304,31 +272,27 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i(TAG, "onOptionsItemSelected");
         switch (item.getItemId()) {
-            case R.id.action_save:
+            case R.id.action_ok:
 
-                //TODO: たまに取得できなくてエラーになる…
-                mCurrentUser = Firebase.getFirebaseUser();
-
-                mUserName = mAddUserNameTextView.getText().toString();
+                mUserName = mUserNameTextView.getText().toString();
 
                 //Save name to the database
                 User user = new User(mUserName, mCurrentUser.getUid());
-                mDatabaseReference.child(FirebaseNodes.User.USER_CHILD)
+                mDatabaseReference.child(FirebaseNodes.USER_CHILD)
                         .child(mCurrentUser.getUid()).setValue(user);
 
                 //Save picture to the storage if only user set the local image
                 if (mPicturePath != null) {
                     Uri file = Uri.fromFile(new File(mPicturePath));
-                    StorageReference picRef = mUserPicReference.child(FirebaseNodes.UserPicture.USER_PIC_CHILD)
+                    StorageReference picRef = mUserPicReference.child(FirebaseNodes.USER_PIC_CHILD)
                             .child(mCurrentUser.getUid());
                     UploadTask uploadTask = picRef.putFile(file);
 
                     uploadTask.addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
-                            Toast.makeText(getApplicationContext(), R.string.failed, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), R.string.failure, Toast.LENGTH_SHORT).show();
                         }
                     }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
@@ -338,8 +302,7 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
                 }
 
 
-                //TODO:理想はコメントから来た人はdetailページからコメント入力画面に遷移
-                Intent intent = new Intent(this, FeedListActivity.class);
+                Intent intent = new Intent(this, FeedActivity.class);
                 startActivity(intent);
 
                 return true;
@@ -354,7 +317,7 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
 
-        mSaveButton = menu.findItem(R.id.action_save);
+        mSaveButton = menu.findItem(R.id.action_ok);
         mSaveButton.setEnabled(false);
 
         if (mTappable) {
@@ -364,24 +327,4 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
         }
         return true;
     }
-
-
-//    private boolean hasSpecialSymbol(String input) {
-//        String regexPattern = "[\uD83C-\uDBFF\uDC00-\uDFFF]+";
-//        Pattern p1 = Pattern.compile("[^a-z] | [\uD83C-\uDBFF\uDC00-\uDFFF]+", Pattern.CASE_INSENSITIVE);
-//        Pattern p2 = Pattern.compile(regexPattern, Pattern.CASE_INSENSITIVE);
-//        boolean b = p1.matcher(input).matches() || p2.matcher(input).matches();
-//
-//        return (b) ? true : false;
-//    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (mAuthListener != null) {
-            FirebaseAuth.getInstance().removeAuthStateListener(mAuthListener);
-        }
-    }
-
-
 }

@@ -1,5 +1,6 @@
 package com.example.aki.javaq.Presentation;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,6 +13,8 @@ import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import com.example.aki.javaq.Domain.Entity.PostMain;
@@ -32,27 +35,14 @@ public class AddPostActivity extends AppCompatActivity {
 
     private MenuItem mPostButton;
     private boolean mTappable;
-    private SharedPreferences mSharedPreferences;
     private EditText mEditTextView;
-    public static String mUsername;
     private String mPostBody;
     private String mUserId;
 
-    private static FirebaseAuth mFirebaseAuth;
     private static FirebaseUser mFirebaseUser;
-    private FirebaseRemoteConfig mFirebaseRemoteConfig;
-    private FirebaseAnalytics mFirebaseAnalytics;
-    public DatabaseReference mFirebaseDatabaseReference;
-    private static String mPhotoUrl;
+    private DatabaseReference mFirebaseRef;
 
-    private static final int REQUEST_INVITE = 1;
-    private static final int REQUEST_IMAGE = 2;
-    public static final int DEFAULT_MSG_LENGTH_LIMIT = 30;
-    private static final String LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif";
-    private static final String TAG = "AddPostActivity";
-    private static final String POST_SENT_EVENT = "post_sent";
     private long mPostTime;
-    private int mCommentNum;
 
 
     @Override
@@ -60,36 +50,18 @@ public class AddPostActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_post_activity);
 
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_with_button);
-        setSupportActionBar(myToolbar);
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
         ab.setDisplayShowTitleEnabled(false);
         ab.setHomeAsUpIndicator(R.drawable.ic_close);
 
 
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
         //New Child entries
-        mFirebaseDatabaseReference = Firebase.getFirebaseDatabaseReference();
-        mFirebaseAnalytics = Firebase.getFirebaseAnalytics(this);
-        mFirebaseRemoteConfig = Firebase.getFirebaseRemoteConfig();
-        Firebase.SetConfig();
-        Firebase.fetchConfig();
-
-        mFirebaseAuth = Firebase.getFirebaseAuth();
-        mFirebaseUser = Firebase.getFirebaseUser();
-        mUsername = mFirebaseUser.getDisplayName();
-        if (mFirebaseUser.getPhotoUrl() != null) {
-            mPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
-        }
+        mFirebaseRef = Firebase.getDatabaseRef();
+        mFirebaseUser = Firebase.getCurrentUser();
 
 
         mEditTextView = (EditText) findViewById(R.id.edit_post);
-//        mEditTextView.setFilters(new InputFilter[]{new InputFilter
-//                .LengthFilter(mSharedPreferences
-//                .getInt(SharedPrefRef
-//                        .FRIENDLY_MSG_LENGTH, DEFAULT_MSG_LENGTH_LIMIT))});
         mEditTextView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -113,6 +85,10 @@ public class AddPostActivity extends AppCompatActivity {
                 //
             }
         });
+
+        // Show Keyboard
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
     }
 
     @Override
@@ -131,14 +107,12 @@ public class AddPostActivity extends AppCompatActivity {
                 mPostTime = System.currentTimeMillis();
 
                 //Save post to the Firebase
-                DatabaseReference ref = mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD);
+                DatabaseReference ref = mFirebaseRef.child(FirebaseNodes.POSTS_CHILD);
                 String key = ref.push().getKey();
                 PostMain post = new PostMain(key, mUserId, mPostTime, mPostBody, null);
                 ref.child(key).setValue(post);
-                mFirebaseAnalytics.logEvent(POST_SENT_EVENT, null);
 
-                Intent intent = new Intent(AddPostActivity.this, FeedListActivity.class);
-                startActivity(intent);
+                finish();
                 return true;
             case android.R.id.home:
                 onBackPressed();
@@ -160,6 +134,18 @@ public class AddPostActivity extends AppCompatActivity {
             mPostButton.setEnabled(false);
         }
         return true;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // Hide keyboard
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
 }

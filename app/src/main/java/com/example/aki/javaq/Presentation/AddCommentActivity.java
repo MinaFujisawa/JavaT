@@ -14,6 +14,7 @@ import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import com.example.aki.javaq.Domain.Entity.PostComment;
@@ -39,23 +40,13 @@ public class AddCommentActivity extends AppCompatActivity {
     private EditText mCommentEditTextView;
     private String mCommentText;
     private MenuItem mPostButton;
-    private SharedPreferences mSharedPreferences;
-    private static FirebaseAuth mFirebaseAuth;
     private static FirebaseUser mFirebaseUser;
-    private FirebaseRemoteConfig mFirebaseRemoteConfig;
-    private FirebaseAnalytics mFirebaseAnalytics;
-    public DatabaseReference mFirebaseDatabaseReference;
-    public static final int DEFAULT_MSG_LENGTH_LIMIT = 30;
-    public static String mUsername;
+    public DatabaseReference mFirebaseRef;
     private String mPostComBody;
     private String mUserId;
-    private long mComTime;
-    private static String mPhotoUrl;
-    private static final String POST_SENT_EVENT = "post_sent";
-    public static final String POST_KEY = "post_key";
+    private long mCurrentTime;
+    private static final String POST_KEY = "post_key";
     private static String mPostKey;
-    private PostComment mPostCommentContentes;
-    private String mCommentNum;
     private int mCommentsNumInt = 0;
 
 
@@ -67,27 +58,15 @@ public class AddCommentActivity extends AppCompatActivity {
         setContentView(R.layout.add_post_activity);
 
         //Toolbar
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_with_button);
-        setSupportActionBar(myToolbar);
+        this.setTitle("");
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
         ab.setHomeAsUpIndicator(R.drawable.ic_close);
 
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         //New Child entries
-        mFirebaseDatabaseReference = Firebase.getFirebaseDatabaseReference();
-        mFirebaseAnalytics = Firebase.getFirebaseAnalytics(this);
-        mFirebaseRemoteConfig = Firebase.getFirebaseRemoteConfig();
-        Firebase.SetConfig();
-        Firebase.fetchConfig();
-//        mPostCommentContentes.setPostId(mPostKey);
+        mFirebaseRef = Firebase.getDatabaseRef();
 
-        mFirebaseAuth = Firebase.getFirebaseAuth();
-        mFirebaseUser = Firebase.getFirebaseUser();
-        mUsername = mFirebaseUser.getDisplayName();
-        if (mFirebaseUser.getPhotoUrl() != null) {
-            mPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
-        }
+        mFirebaseUser = Firebase.getCurrentUser();
 
         mCommentEditTextView = (EditText) findViewById(R.id.edit_post);
 
@@ -113,11 +92,9 @@ public class AddCommentActivity extends AppCompatActivity {
 
         //show keyboard
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(mCommentEditTextView, InputMethodManager.SHOW_IMPLICIT);
-//        if (!(imm == null))
-//            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 1);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
 
-        final DatabaseReference post_ref = mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD).child(mPostKey);
+        final DatabaseReference post_ref = mFirebaseRef.child(FirebaseNodes.POSTS_CHILD).child(mPostKey);
         post_ref.addValueEventListener(new ValueEventListener() {
             public void onDataChange(DataSnapshot snapshot) {
                 PostMain postMain = snapshot.getValue(PostMain.class);
@@ -141,21 +118,22 @@ public class AddCommentActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_post:
-                //TODO: mCommentTextをデータベースにセット
                 mPostComBody = mCommentEditTextView.getText().toString();
                 mUserId = mFirebaseUser.getUid();
-                mComTime = System.currentTimeMillis();
+                mCurrentTime = System.currentTimeMillis();
+
                 //Save post to the Firebase
-                DatabaseReference ref = mFirebaseDatabaseReference.child(FirebaseNodes.PostComment.POSTS_COM_CHILD);
+                DatabaseReference ref = mFirebaseRef.child(FirebaseNodes.POSTS_COM_CHILD);
                 String key = ref.push().getKey();
-                PostComment comment = new PostComment(key, mPostKey, mPostComBody, mComTime, 0, 0, false, false, mUserId);
+                PostComment comment = new PostComment(key, mPostKey, mPostComBody, mCurrentTime, mUserId);
                 ref.child(key).setValue(comment);
-                mFirebaseAnalytics.logEvent(POST_SENT_EVENT, null);
-                final DatabaseReference post_ref = mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD).child(mPostKey);
+
+                // Set comment num
+                final DatabaseReference post_ref = mFirebaseRef.child(FirebaseNodes.POSTS_CHILD).child(mPostKey);
                 mCommentsNumInt++;
-                post_ref.child(FirebaseNodes.PostMain.COMMENTS_NUM).setValue(mCommentsNumInt);
-                Intent intent = DetailActivity.newIntent(this, mPostKey);
-                startActivity(intent);
+                post_ref.child(FirebaseNodes.COMMENTS_NUM).setValue(mCommentsNumInt);
+
+                finish();
 
                 return true;
             case android.R.id.home:
@@ -192,5 +170,15 @@ public class AddCommentActivity extends AppCompatActivity {
         return false;
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
 
+        // Hide keyboard
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 }

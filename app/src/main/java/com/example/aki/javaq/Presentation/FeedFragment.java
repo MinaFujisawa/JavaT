@@ -2,15 +2,8 @@ package com.example.aki.javaq.Presentation;
 
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.SharedPreferences;
 
 import com.bumptech.glide.Glide;
-import com.example.aki.javaq.Domain.Entity.PostMain;
-import com.example.aki.javaq.Domain.Entity.User;
-import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
-import com.example.aki.javaq.Domain.Helper.TimeUtils;
-import com.example.aki.javaq.Domain.Usecase.Firebase;
-
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
@@ -26,12 +19,17 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.aki.javaq.Domain.Entity.PostMain;
+import com.example.aki.javaq.Domain.Entity.User;
+import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
+import com.example.aki.javaq.Domain.Helper.TimeUtils;
+import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -47,29 +45,17 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class FeedFragment extends Fragment {
 
-    private static final String TAG = "FeedFragment";
     private View view;
     private RecyclerView mComRecyclerView;
-    private SharedPreferences mSharedPreferences;
-    private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private FloatingActionButton mNewPostButton;
-    public DatabaseReference mFirebaseDatabaseReference;
-    public DatabaseReference mPostsRef;
-    public DatabaseReference mUsersRef;
+    private DatabaseReference mPostsRef;
+    private DatabaseReference mUsersRef;
     private LinearLayoutManager mLinearLayoutManager;
-    private static final int REQUEST_CODE_LOGIN = 1;
-    private static final String LOGIN_DIALOG = "login_dialog";
-    //    private FirebaseRecyclerAdapter<PostMain, PostViewHolder> mFirebaseAdapter;
+
     private PostAdapter mPostAdapter;
 
-    private static int mLastAdapterClickedPosition = -1;
-    private String mUsername;
-    private String mPostBody;
-    private Uri mPhotoUrl;
     private String mPostTimeAgo;
-    private String mPostKey;
-    private String mUserId;
     private int mCommentsNumInt;
     private String mCommentsNum;
 
@@ -91,9 +77,8 @@ public class FeedFragment extends Fragment {
         mComRecyclerView = (RecyclerView) view.findViewById(R.id.com_list_recycler_view);
         mComRecyclerView.setLayoutManager(mLinearLayoutManager);
 
-        mFirebaseDatabaseReference = Firebase.getFirebaseDatabaseReference();
-        mPostsRef = Firebase.getFirebaseDatabaseReference().child(FirebaseNodes.PostMain.POSTS_CHILD);
-        mUsersRef = Firebase.getFirebaseDatabaseReference().child(FirebaseNodes.User.USER_CHILD);
+        mPostsRef = Firebase.getDatabaseRef().child(FirebaseNodes.POSTS_CHILD);
+        mUsersRef = Firebase.getDatabaseRef().child(FirebaseNodes.USER_CHILD);
 
         if (mPostAdapter == null) {
             mPostAdapter = new PostAdapter(mPostsRef, mUsersRef);
@@ -101,8 +86,7 @@ public class FeedFragment extends Fragment {
         }
 
         //get user info
-        mFirebaseAuth = Firebase.getFirebaseAuth();
-        mFirebaseUser = Firebase.getFirebaseUser();
+        mFirebaseUser = Firebase.getCurrentUser();
 
         //For the issue floating action button unexpected anchor gravity change
         mComRecyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
@@ -128,7 +112,7 @@ public class FeedFragment extends Fragment {
                     // Not signed in, launch the Sign In activity
                     FragmentManager manager = getActivity().getSupportFragmentManager();
                     LoginDialogFragment dialog = LoginDialogFragment.newInstance();
-                    dialog.show(manager, LOGIN_DIALOG);
+                    dialog.show(manager, LoginDialogFragment.LOGIN_DIALOG);
 
                 } else {
                     Intent intent = new Intent(getActivity(), AddPostActivity.class);
@@ -136,7 +120,6 @@ public class FeedFragment extends Fragment {
                 }
             }
         });
-
 
         return view;
     }
@@ -191,6 +174,7 @@ public class FeedFragment extends Fragment {
 
             //Display Body text
             viewHolder.mPostBodyTextView.setText(mPostMain.getPostBody());
+
             //Set ellipsize
             viewHolder.mPostBodyTextView.setSingleLine(false);
             viewHolder.mPostBodyTextView.setEllipsize(TextUtils.TruncateAt.END);
@@ -217,7 +201,7 @@ public class FeedFragment extends Fragment {
                 viewHolder.mUserNameTextView.setText(mUser.getUserName());
 
                 //Display User picture
-                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
+                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.USER_PIC_CHILD);
                 rootRef.child(mUser.getUserId()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
@@ -255,8 +239,9 @@ public class FeedFragment extends Fragment {
         private TextView mPostTimeTextView;
         private TextView mCommentsNumTextView;
         private CircleImageView mUserIconImageView;
+        private Button mDeleteButton;
+
         private PostMain mPostMain;
-        private User mUser;
 
 
         public PostViewHolder(View itemView) {
@@ -267,6 +252,7 @@ public class FeedFragment extends Fragment {
             mPostTimeTextView = (TextView) itemView.findViewById(R.id.post_date);
             mCommentsNumTextView = (TextView) itemView.findViewById(R.id.post_comment_num);
             mUserIconImageView = (CircleImageView) itemView.findViewById(R.id.post_user_icon);
+            mDeleteButton = (Button) itemView.findViewById(R.id.post_delete);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -275,6 +261,8 @@ public class FeedFragment extends Fragment {
                     startActivity(intent);
                 }
             });
+
+            mDeleteButton.setVisibility(View.GONE);
         }
 
         public void bind(PostMain post) {

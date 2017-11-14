@@ -6,10 +6,6 @@
         <item name="colorPrimary">@color/main_color</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/sub_color</item>
-        <item name="windowActionBar">true</item>
-        <item name="windowNoTitle">true</item>
-        <item name="android:windowActionBarOverlay">true</item>
-        <item name="windowActionBarOverlay">true</item>
         <item name="android:textViewStyle">@style/RobotoTextViewStyle</item>
         <item name="android:buttonStyle">@style/RobotoButtonStyle</item>
         <item name="android:windowBackground">@color/white</item>
@@ -27,7 +23,6 @@
     </style>
 
 
-    <!-- gray tool bar -->
 
     <!-- ToolBar -->
     <style name="mToolBar">

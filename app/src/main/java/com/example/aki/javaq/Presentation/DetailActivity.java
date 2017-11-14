@@ -23,7 +23,7 @@ public class DetailActivity extends SingleFragmentActivity {
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(getApplicationContext(),FeedListActivity.class);
+        Intent intent = new Intent(getApplicationContext(),FeedActivity.class);
         startActivity(intent);
     }
 }

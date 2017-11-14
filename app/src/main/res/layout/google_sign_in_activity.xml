@@ -12,14 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/mMainText"
-        android:text="@string/whoops"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/mMainText"
-        android:layout_marginTop="24dp"
-        android:text="@string/login_text"/>
+        android:text="@string/welcome"/>
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"

@@ -12,7 +12,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.aki.javaq.Domain.Usecase.SignInLab;
+import com.example.aki.javaq.Domain.Usecase.Firebase;
+import com.example.aki.javaq.Presentation.UserRegistrationActivity;
 import com.example.aki.javaq.R;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -21,7 +22,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 
 /**
  * Created by MinaFujisawa on 2017/06/13.
@@ -29,14 +35,13 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginDialogFragment extends DialogFragment implements GoogleApiClient.OnConnectionFailedListener {
     private TextView mLaterTextView;
-    //Fragment target, int requestCode
-
     private static final int REQUEST_CODE_LOGIN = 1;
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
     private static FirebaseAuth mFirebaseAuth;
     private SignInButton mSignInButton;
     private static GoogleApiClient mGoogleApiClient;
+    public static final String LOGIN_DIALOG = "login_dialog";
 
 
     public static LoginDialogFragment newInstance() {
@@ -93,22 +98,42 @@ public class LoginDialogFragment extends DialogFragment implements GoogleApiClie
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        mFirebaseAuth = Firebase.getFirebaseAuth();
+
+        // Google Sign-in
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             if (result.isSuccess()) {
                 // Google Sign-In was successful, authenticate with Firebase
                 GoogleSignInAccount account = result.getSignInAccount();
-                SignInLab.firebaseAuthWithGoogle(account, getActivity());
+                AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+                mFirebaseAuth.signInWithCredential(credential)
+                        .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
 
-                Intent intent = new Intent(getContext(), UserRegistrationActivity.class);
-                intent.putExtra(UserRegistrationActivity.NEW_USER, true);
-                startActivity(intent);
+                                if (!task.isSuccessful()) {
+                                    Log.w(TAG, "signInWithCredential", task.getException());
+                                    Toast.makeText(getActivity(), "Authentication failed.",
+                                            Toast.LENGTH_SHORT).show();
+
+                                } else {
+                                    Intent intent = new Intent(getContext(), UserRegistrationActivity.class);
+                                    startActivity(intent);
+                                    getActivity().finish();
+
+                                }
+                            }
+                        });
+
 
             } else {
                 // Google Sign-In failed
                 Log.e(TAG, "Google Sign-In failed.");
             }
+
+
         }
     }
 

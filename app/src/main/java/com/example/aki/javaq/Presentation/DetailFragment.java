@@ -11,11 +11,13 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -50,38 +52,30 @@ import de.hdodenhof.circleimageview.CircleImageView;
  * A placeholder fragment containing a simple view.
  */
 public class DetailFragment extends Fragment {
-    private SwipeRefreshLayout mSwipeRefreshLayout;
     private TextView mUserNameTextView;
     private CircleImageView mUserIconImageView;
     private TextView mPostTextView;
     private TextView mPostDateTextView;
+    private Button mPostDeleteButton;
     private TextView mPostCommentsNumTextView;
     private EditText mAddCommentsEditTextView;
     private CircleImageView mMyIconImageView;
-    private CommentsAdapter mAdapter;
     private int mCommentsNumInt = 0;
-    private Date mCommentDate;
-    private DatabaseReference mFirebaseDatabaseReference;
-    private FirebaseRemoteConfig mFirebaseRemoteConfig;
-    private FirebaseAnalytics mFirebaseAnalytics;
+    private DatabaseReference mFirebaseRef;
     private String mPostKey;
     private FirebaseAuth mFirebaseAuth;
-    private FirebaseUser mFirebaseUser;
-    public DatabaseReference mCommentsRef;
-    public DatabaseReference mUsersRef;
-    public DatabaseReference mComRef;
+    private FirebaseUser mCurrentUser;
+    private DatabaseReference mCommentsRef;
+    private DatabaseReference mUsersRef;
     private CommentsAdapter mCommentsAdapter;
     private RecyclerView mCommentsRecyclerView;
     private String mPostTimeAgo;
-    private static final int REQUEST_CODE_LOGIN = 1;
-    public static final String ARG_POST_KEY = "arg_post_key";
-    private static final String LOGIN_DIALOG = "login_dialog";
+    private static final String ARG_POST_KEY = "arg_post_key";
     private View view;
     private LinearLayoutManager mLinearLayoutManager;
-    public static final String POST_KEY = "post_key";
-    private SharedPreferences mSharedPreferences;
-    private static final String POST_SENT_EVENT = "post_sent";
+    private static final String POST_KEY = "post_key";
     private String mCommentsNum;
+    private boolean isSignedIn = false;
 
     public static DetailFragment newInstance(String postKey) {
         Bundle args = new Bundle();
@@ -91,24 +85,18 @@ public class DetailFragment extends Fragment {
         return fragment;
     }
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPostKey = getArguments().getString(ARG_POST_KEY);
-    }
 
-//    private SwipeRefreshLayout.OnRefreshListener mOnRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
-//        @Override
-//        public void onRefresh() {
-//            // 3秒待機
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    mSwipeRefreshLayout.setRefreshing(false);
-//                }
-//            }, 3000);
-//        }
-//    };
+        // Check sign-in status
+        FirebaseUser mCurrentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (mCurrentUser != null) {
+            isSignedIn = true;
+        }
+    }
 
 
     @Override
@@ -119,10 +107,7 @@ public class DetailFragment extends Fragment {
         mLinearLayoutManager.setStackFromEnd(true);
         mCommentsRecyclerView = (RecyclerView) view.findViewById(R.id.com_comments_recycler_view);
         mCommentsRecyclerView.setLayoutManager(mLinearLayoutManager);
-        //For Refresh
-//        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh);
-//        mSwipeRefreshLayout.setOnRefreshListener(mOnRefreshListener);
-//        mSwipeRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.main_color));
+
 
         //For Post
         mUserNameTextView = (TextView) view.findViewById(R.id.post_user_name);
@@ -130,31 +115,60 @@ public class DetailFragment extends Fragment {
         mPostTextView = (TextView) view.findViewById(R.id.post_text);
         mPostDateTextView = (TextView) view.findViewById(R.id.post_date);
         mPostCommentsNumTextView = (TextView) view.findViewById(R.id.post_comment_num);
-        mFirebaseDatabaseReference = Firebase.getFirebaseDatabaseReference();
-        mCommentsRef = Firebase.getFirebaseDatabaseReference().child(FirebaseNodes.PostComment.POSTS_COM_CHILD);
-        mUsersRef = Firebase.getFirebaseDatabaseReference().child(FirebaseNodes.User.USER_CHILD);
+        mPostDeleteButton = (Button) view.findViewById(R.id.post_delete);
+        mFirebaseRef = Firebase.getDatabaseRef();
+        mCommentsRef = Firebase.getDatabaseRef().child(FirebaseNodes.POSTS_COM_CHILD);
+        mUsersRef = Firebase.getDatabaseRef().child(FirebaseNodes.USER_CHILD);
+        mCurrentUser = Firebase.getCurrentUser();
 
-        mFirebaseUser = Firebase.getFirebaseUser();
-        mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD).child(mPostKey).addValueEventListener(new ValueEventListener() {
+
+        // Delete button
+        mPostDeleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getActivity().finish();
+                mFirebaseRef.child(FirebaseNodes.POSTS_CHILD).child(mPostKey).removeValue();
+            }
+        });
+
+
+        mFirebaseRef.child(FirebaseNodes.POSTS_CHILD).child(mPostKey).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(final DataSnapshot dataSnapshot) {
-                mPostTextView.setText(dataSnapshot.child(FirebaseNodes.PostMain.POST_BODY).getValue().toString());
 
-                mFirebaseDatabaseReference.child(FirebaseNodes.User.USER_CHILD).addValueEventListener(new ValueEventListener() {
+                final PostMain mPostMain = dataSnapshot.getValue(PostMain.class);
+                if (mPostMain == null) return;
+
+                mPostTextView.setText(mPostMain.getPostBody());
+
+                mFirebaseRef.child(FirebaseNodes.USER_CHILD).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(final DataSnapshot snapshot) {
-                        mUserNameTextView.setText(snapshot.child(dataSnapshot.child(FirebaseNodes.PostMain.USER_ID).getValue().toString()).child(FirebaseNodes.User.USER_NAME).getValue().toString());
-                        //Display User picture
-                        StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
-                        rootRef.child(dataSnapshot.child(FirebaseNodes.PostMain.USER_ID).getValue().toString()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                            @Override
-                            public void onSuccess(Uri uri) {
-                                //If there's a picture in the storage, set the picture
-                                Glide.with(getActivity())
-                                        .load(uri)
-                                        .into(mUserIconImageView);
+
+                        User mPostUser = snapshot.child(mPostMain.getUserId()).getValue(User.class);
+
+                        // Display User name
+                        mUserNameTextView.setText(mPostUser.getUserName());
+
+                        if (mCurrentUser != null) {
+                            if (!mCurrentUser.getUid().equals(mPostUser.getUserId())) {
+                                mPostDeleteButton.setVisibility(View.GONE);
                             }
-                        }).addOnFailureListener(new OnFailureListener() {
+                        }
+
+
+                        //Display User picture
+                        StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.USER_PIC_CHILD);
+                        rootRef.child(mPostUser.getUserId()).getDownloadUrl()
+                                .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        //If there's a picture in the storage, set the picture
+                                        Glide.with(getActivity())
+                                                .load(uri)
+                                                .into(mUserIconImageView);
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception exception) {
                                 //If not, set the default picture
@@ -168,7 +182,6 @@ public class DetailFragment extends Fragment {
                                         .into(mUserIconImageView);
                             }
                         });
-
                     }
 
                     @Override
@@ -176,7 +189,7 @@ public class DetailFragment extends Fragment {
 
                     }
                 });
-                mPostDateTextView.setText(TimeUtils.getTimeAgo((long) dataSnapshot.child(FirebaseNodes.PostMain.POST_TIME).getValue()));
+                mPostDateTextView.setText(TimeUtils.getTimeAgo(mPostMain.getPostTime()));
             }
 
             @Override
@@ -186,12 +199,14 @@ public class DetailFragment extends Fragment {
 
 
         // Display number of comments
-        final DatabaseReference post_ref = mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD).child(mPostKey);
+        final DatabaseReference post_ref = mFirebaseRef.child(FirebaseNodes.POSTS_CHILD).child(mPostKey);
         post_ref.addValueEventListener(new ValueEventListener() {
             public void onDataChange(DataSnapshot snapshot) {
                 PostMain mPostMain = snapshot.getValue(PostMain.class);
+                if (mPostMain == null) return;
+
                 mCommentsNumInt = mPostMain.getCommentsNum();
-                if(mCommentsNumInt == 0){
+                if (mCommentsNumInt == 0) {
                     mCommentsNum = getResources().getString(R.string.comments_zero, mCommentsNumInt);
                 } else {
                     mCommentsNum = getResources().getQuantityString(R.plurals.comments_plural, mCommentsNumInt, mCommentsNumInt);
@@ -206,40 +221,48 @@ public class DetailFragment extends Fragment {
 
         //get user info
         mFirebaseAuth = Firebase.getFirebaseAuth();
-        mFirebaseUser = Firebase.getFirebaseUser();
+        mCurrentUser = mFirebaseAuth.getCurrentUser();
+
+
+
         //For Add a comment
         mMyIconImageView = (CircleImageView) view.findViewById(R.id.my_user_icon);
-        StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
-        rootRef.child(mFirebaseUser.getUid()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                //If there's a picture in the storage, set the picture
-                Glide.with(getActivity())
-                        .load(uri)
-                        .into(mMyIconImageView);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                //If not, set the default picture
-                int id = R.drawable.image_user_default;
-                Uri mPictureDefaultUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE +
-                        "://" + getResources().getResourcePackageName(id)
-                        + '/' + getResources().getResourceTypeName(id)
-                        + '/' + getResources().getResourceEntryName(id));
-                Glide.with(getActivity())
-                        .load(mPictureDefaultUri)
-                        .into(mMyIconImageView);
-            }
-        });
+
+        if (isSignedIn) {
+            StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.USER_PIC_CHILD);
+            rootRef.child(mCurrentUser.getUid()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                @Override
+                public void onSuccess(Uri uri) {
+                    //If there's a picture in the storage, set the picture
+                    Glide.with(getActivity())
+                            .load(uri)
+                            .into(mMyIconImageView);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    //If not, set the default picture
+                    int id = R.drawable.image_user_default;
+                    Uri mPictureDefaultUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE +
+                            "://" + getResources().getResourcePackageName(id)
+                            + '/' + getResources().getResourceTypeName(id)
+                            + '/' + getResources().getResourceEntryName(id));
+                    Glide.with(getActivity())
+                            .load(mPictureDefaultUri)
+                            .into(mMyIconImageView);
+                }
+            });
+        } else {
+            mMyIconImageView.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.image_user_default));
+            mPostDeleteButton.setVisibility(view.GONE);
+        }
+
 
         mAddCommentsEditTextView = (EditText) view.findViewById(R.id.add_new_comment_text);
         mAddCommentsEditTextView.setFocusable(false);
         mAddCommentsEditTextView.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //TODO: ログイン済みかGET
-                boolean mLogined = true;
-                if (mLogined) {
+                if (isSignedIn) {
                     Intent intent = new Intent(getActivity().getApplicationContext(), AddCommentActivity.class);
                     intent.putExtra(POST_KEY, mPostKey);
                     startActivity(intent);
@@ -247,7 +270,7 @@ public class DetailFragment extends Fragment {
                     // display dialog
                     FragmentManager manager = getActivity().getSupportFragmentManager();
                     LoginDialogFragment dialog = LoginDialogFragment.newInstance();
-                    dialog.show(manager, LOGIN_DIALOG);
+                    dialog.show(manager, LoginDialogFragment.LOGIN_DIALOG);
                 }
             }
         });
@@ -256,6 +279,8 @@ public class DetailFragment extends Fragment {
             mCommentsAdapter = new DetailFragment.CommentsAdapter(mCommentsRef, mUsersRef);
             mCommentsRecyclerView.setAdapter(mCommentsAdapter);
         }
+
+
 
         return view;
     }
@@ -310,37 +335,33 @@ public class DetailFragment extends Fragment {
             mPostComment = mPostCommentsList.get(position);
             viewHolder.bind(mPostComment);
 
-
             //Display Body text
-            viewHolder.mCommentTextView.setText(mPostComment.getComBody());
+            viewHolder.mCommentTextView.setText(mPostComment.getCommentBody());
 
             //Display Time
-            long timestamp = mPostComment.getComTime();
+            long timestamp = mPostComment.getCommentTime();
             mPostTimeAgo = TimeUtils.getTimeAgo(timestamp);
             viewHolder.mCommentTimeTextView.setText(mPostTimeAgo);
 
-            //Display good / bad num
-            viewHolder.mCommentGoodTextView.setText(String.valueOf(mPostComment.getComLike()));
-            viewHolder.mCommentBadTextView.setText(String.valueOf(mPostComment.getComUnlike()));
-            if (mPostComment.isComLiked()) {
-                DrawableCompat.setTint(viewHolder.mCommentGoodButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_color));
-            } else {
-                DrawableCompat.setTint(viewHolder.mCommentGoodButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_text));
-            }
-            if (mPostComment.isComUnliked()) {
-                DrawableCompat.setTint(viewHolder.mCommentBadButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_color));
-            } else {
-                DrawableCompat.setTint(viewHolder.mCommentBadButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_text));
-            }
-
 
             if (mUserMap.containsKey(mPostComment.getUserId().toString())) {
-                //Display User name
+
                 User mUser = mUserMap.get(mPostComment.getUserId().toString());
+
+                // Set delete button invisible to other people
+                FirebaseUser currentUser = Firebase.getCurrentUser();
+                if (isSignedIn){
+                    if (!currentUser.getUid().equals(mUser.getUserId())) {
+                        viewHolder.mCommentDeleteButton.setVisibility(View.GONE);
+                    }
+                }
+
+
+                //Display User name
                 viewHolder.mCommentUserNameTextView.setText(mUser.getUserName());
 
                 //Display User picture
-                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
+                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.USER_PIC_CHILD);
                 rootRef.child(mUser.getUserId()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
@@ -364,8 +385,6 @@ public class DetailFragment extends Fragment {
                     }
                 });
             }
-
-
         }
 
         @Override
@@ -380,12 +399,8 @@ public class DetailFragment extends Fragment {
         private CircleImageView mCommentUserIconImageView;
         private TextView mCommentTextView;
         private TextView mCommentTimeTextView;
-        private ImageButton mCommentGoodButton;
-        private ImageButton mCommentBadButton;
-        private TextView mCommentGoodTextView;
-        private TextView mCommentBadTextView;
+        private Button mCommentDeleteButton;
         private PostComment mPostComment;
-        private User mUser;
 
         public CommentsViewHolder(View itemView) {
             super(itemView);
@@ -394,35 +409,22 @@ public class DetailFragment extends Fragment {
             mCommentUserIconImageView = (CircleImageView) itemView.findViewById(R.id.comment_user_icon);
             mCommentTextView = (TextView) itemView.findViewById(R.id.comment_text);
             mCommentTimeTextView = (TextView) itemView.findViewById(R.id.comment_date);
-            mCommentGoodTextView = (TextView) itemView.findViewById(R.id.comment_good_num);
-            mCommentBadTextView = (TextView) itemView.findViewById(R.id.comment_bad_num);
-            mCommentGoodButton = (ImageButton) itemView.findViewById(R.id.comment_button_good);
-            mCommentBadButton = (ImageButton) itemView.findViewById(R.id.comment_button_bad);
+            mCommentDeleteButton = (Button) itemView.findViewById(R.id.comment_delete);
 
-            // Good / Bad button
-            mCommentGoodButton.setOnClickListener(new View.OnClickListener() {
+            mCommentDeleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
                 public void onClick(View v) {
-                    addLike(mPostComment);
-                }
-            });
-            mCommentGoodTextView.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    addLike(mPostComment);
+                    mFirebaseRef.child(FirebaseNodes.POSTS_COM_CHILD).child(mPostComment.getCommentId()).removeValue();
+
+                    final DatabaseReference post_ref = mFirebaseRef.child(FirebaseNodes.POSTS_CHILD).child(mPostKey);
+                    mCommentsNumInt--;
+                    post_ref.child(FirebaseNodes.COMMENTS_NUM).setValue(mCommentsNumInt);
                 }
             });
 
-            //Bad button
-            mCommentBadButton.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    addUnlike(mPostComment);
-                }
-            });
-            mCommentBadTextView.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    addUnlike(mPostComment);
-                }
-            });
-
+            if (!isSignedIn){
+                mCommentDeleteButton.setVisibility(view.GONE);
+            }
         }
 
         public void bind(final PostComment postComment) {
@@ -430,71 +432,20 @@ public class DetailFragment extends Fragment {
         }
 
 
-        private void addLike(PostComment mPostComment) {
-            mComRef = mCommentsRef.child(mPostComment.getComId());
-            int mLikeNum = mPostComment.getComLike();
-            int mUnlikeNum = mPostComment.getComUnlike();
-            boolean isLiked = mPostComment.isComLiked();
-            boolean isUnliked = mPostComment.isComUnliked();
-            if (!isLiked) {
-                if (isUnliked) {
-                    mUnlikeNum--;
-                    mCommentBadTextView.setText(String.valueOf(mUnlikeNum));
-                    DrawableCompat.setTint(mCommentBadButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_text));
-                    mPostComment.setComUnliked(false);
-                    mPostComment.setComUnliked(false);
-                    mPostComment.setComUnlike(mUnlikeNum);
-                    mComRef.setValue(mPostComment);
-                }
-                mLikeNum++;
-                mCommentGoodTextView.setText(String.valueOf(mLikeNum));
-                DrawableCompat.setTint(mCommentGoodButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_color));
-                mPostComment.setComLiked(true);
-                mPostComment.setComLike(mLikeNum);
-                mComRef.setValue(mPostComment);
-            } else {
-                mLikeNum--;
-                mCommentGoodTextView.setText(String.valueOf(mLikeNum));
-                DrawableCompat.setTint(mCommentGoodButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_text));
-                mPostComment.setComLiked(false);
-                mPostComment.setComLike(mLikeNum);
-                mComRef.setValue(mPostComment);
-            }
-        }
-
-        private void addUnlike(PostComment mPostComment) {
-            mComRef = mCommentsRef.child(mPostComment.getComId());
-            int mLikeNum = mPostComment.getComLike();
-            int mUnlikeNum = mPostComment.getComUnlike();
-            boolean isLiked = mPostComment.isComLiked();
-            boolean isUnliked = mPostComment.isComUnliked();
-            if (!isUnliked) {
-                if (isLiked) {
-                    mLikeNum--;
-                    mCommentGoodTextView.setText(String.valueOf(mLikeNum));
-                    DrawableCompat.setTint(mCommentGoodButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_text));
-                    mPostComment.setComLiked(false);
-                    mPostComment.setComLike(mLikeNum);
-                    mComRef.setValue(mPostComment);
-                }
-                mUnlikeNum++;
-                mCommentBadTextView.setText(String.valueOf(mUnlikeNum));
-                DrawableCompat.setTint(mCommentBadButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_color));
-                mPostComment.setComUnliked(true);
-                mPostComment.setComUnlike(mUnlikeNum);
-                mComRef.setValue(mPostComment);
-            } else {
-                mUnlikeNum--;
-                mCommentBadTextView.setText(String.valueOf(mUnlikeNum));
-                DrawableCompat.setTint(mCommentBadButton.getDrawable(), ContextCompat.getColor(getActivity(), R.color.sub_text));
-                mPostComment.setComUnliked(false);
-                mPostComment.setComUnlike(mUnlikeNum);
-                mComRef.setValue(mPostComment);
-            }
-        }
-
-
     }
 
 
+    // Hide ActionBar
+    @Override
+    public void onResume() {
+        super.onResume();
+        ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+    }
 }
+
