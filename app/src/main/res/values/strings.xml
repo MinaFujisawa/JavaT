@@ -1,30 +1,7 @@
 <resources>
-    <string name="app_name">JavaQ</string>
-
-    <!-- Menu -->
-    <string name="quiz">Quiz</string>
-    <string name="community">Community</string>
-    <string name="progress">Progress</string>
-    <string name="setting">Setting</string>
-    <string name="notification">Notification</string>
-    <string name="other">Other</string>
-    <string name="aboutus">About us</string>
-    <string name="pp">Privacy policy</string>
-    <string name="feedback">Send feedback</string>
-
-    <!-- Quiz -->
-    <string name="continue_button">Continue</string>
-    <string name="back_button">Back to home</string>
-    <string name="retry_button">Retry</string>
-    <string name="failed">failed...</string>
-
-    <!-- Progress -->
-    <string name="active_streak">Active streak</string>
-    <string name="longest_streak">Longest streak</string>
-    <string name="day">day</string>
+    <string name="app_name">JavaT</string>
 
 
-    <!-- Community -->
     <string name="comments_zero">%1$s comment</string>
     <plurals name="comments_plural">
         <item quantity="one">%1$s comment</item>
@@ -34,22 +11,22 @@
     <string name="add_comment_ph">Write a comment</string>
     <string name="edit_picture">Edit profile picture</string>
     <string name="user_name">User name</string>
-    <string name="save">Save</string>
+    <string name="ok">OK</string>
     <string name="post">Post</string>
     <string name="error_user_name">Username should be less than 20 characters</string>
-
-
-    <!-- Other -->
     <string name="open">open</string>
     <string name="close">close</string>
+
+    <!-- Menu -->
     <string name="sign_in">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="profile">Profile</string>
 
 
     <!-- Dialog -->
-    <string name="whoops">Whoops!</string>
+    <string name="welcome">Welcome!</string>
     <string name="login_text">You must register to do this</string>
     <string name="later">Later</string>
-    <string name="logout">Log out</string>
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="logout_message">Are you sure you want to log out?</string>
@@ -61,7 +38,6 @@
     <string name="back_quiz_message">All progress in this session will be lost</string>
 
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_community_detail">CommunityDetailActivity</string>
     <string name="title_activity_community_post">CommunityPostActivity</string>
     <string name="failure">failure...</string>

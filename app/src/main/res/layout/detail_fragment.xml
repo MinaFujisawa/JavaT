@@ -12,7 +12,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp">
-            <include layout="@layout/com_list_item" />
+            <include layout="@layout/feed_item" />
         </FrameLayout>
 
         <TextView

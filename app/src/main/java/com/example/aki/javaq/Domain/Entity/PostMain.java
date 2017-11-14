@@ -9,7 +9,6 @@ import java.util.UUID;
 public class PostMain {
     private String mPostId;
     private String mUserId;
-    //    private boolean mPostIsFavod;
     private long mPostTime;
     private String mPostBody;
     private String mCommentId;

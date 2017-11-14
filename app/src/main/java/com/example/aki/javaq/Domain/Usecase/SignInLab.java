@@ -1,31 +1,19 @@
 package com.example.aki.javaq.Domain.Usecase;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.example.aki.javaq.Presentation.Community.CommunityPostActivity;
-import com.example.aki.javaq.Presentation.Community.LoginDialogFragment;
-import com.example.aki.javaq.Presentation.UserRegistrationActivity;
-import com.example.aki.javaq.R;
-import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.auth.api.signin.GoogleSignInResult;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 /**
@@ -39,7 +27,7 @@ public class SignInLab extends AppCompatActivity {
 
 
     public static void signOut() {
-        mFirebaseAuth = FirebaseLab.getFirebaseAuth();
+        mFirebaseAuth = Firebase.getFirebaseAuth();
         mFirebaseAuth.signOut();
         //TODO: Google sign-outの検討
         // Google sign out
@@ -48,7 +36,7 @@ public class SignInLab extends AppCompatActivity {
 
     public static void firebaseAuthWithGoogle(GoogleSignInAccount acct, final Activity activity) {
         // Initialize FirebaseAuth
-        mFirebaseAuth = FirebaseLab.getFirebaseAuth();
+        mFirebaseAuth = Firebase.getFirebaseAuth();
         Log.d(TAG, "firebaseAuthWithGooogle:" + acct.getId());
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mFirebaseAuth.signInWithCredential(credential)

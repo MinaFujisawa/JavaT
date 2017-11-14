@@ -1,6 +1,5 @@
 package com.example.aki.javaq.Presentation;
 
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -17,7 +16,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
-import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -31,14 +29,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.example.aki.javaq.Domain.Entity.PostMain;
 import com.example.aki.javaq.Domain.Entity.User;
 import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
-import com.example.aki.javaq.Domain.Usecase.FirebaseLab;
+import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.Domain.Helper.PictureUtils;
 import com.example.aki.javaq.Presentation.Community.CommunityListActivity;
 import com.example.aki.javaq.R;
-import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -51,7 +47,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -104,8 +99,8 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         }
 
-        mDatabaseReference = FirebaseLab.getFirebaseDatabaseReference();
-        mUserPicReference = FirebaseLab.getStorageReference();
+        mDatabaseReference = Firebase.getFirebaseDatabaseReference();
+        mUserPicReference = Firebase.getStorageReference();
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -113,14 +108,14 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-                    mCurrentUser = FirebaseLab.getFirebaseUser();
+                    mCurrentUser = Firebase.getFirebaseUser();
                     setView();
                 } else {
                     mAddUserNameTextView.setText("");
                 }
             }
         };
-        FirebaseLab.getFirebaseAuth().addAuthStateListener(mAuthListener);
+        Firebase.getFirebaseAuth().addAuthStateListener(mAuthListener);
 
 
         mMyIconImageView = (CircleImageView) findViewById(R.id.add_user_icon);
@@ -190,7 +185,7 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
                 mAddUserNameTextView.setText(mUserName);
 
                 //Display User picture
-                StorageReference rootRef = FirebaseLab.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
+                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
                 rootRef.child(mCurrentUser.getUid()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
@@ -304,7 +299,7 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_save, menu);
+        inflater.inflate(R.menu.menu_ok, menu);
         return true;
     }
 
@@ -315,7 +310,7 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
             case R.id.action_save:
 
                 //TODO: たまに取得できなくてエラーになる…
-                mCurrentUser = FirebaseLab.getFirebaseUser();
+                mCurrentUser = Firebase.getFirebaseUser();
 
                 mUserName = mAddUserNameTextView.getText().toString();
 

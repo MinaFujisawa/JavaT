@@ -4,8 +4,6 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -21,14 +19,13 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.aki.javaq.Domain.Entity.PostComment;
 import com.example.aki.javaq.Domain.Entity.PostMain;
 import com.example.aki.javaq.Domain.Entity.User;
 import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
-import com.example.aki.javaq.Domain.Usecase.FirebaseLab;
+import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.R;
 import com.example.aki.javaq.Domain.Helper.TimeUtils;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -116,7 +113,7 @@ public class CommunityDetailFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.com_detail_fragment, container, false);
+        view = inflater.inflate(R.layout.detail_fragment, container, false);
         mLinearLayoutManager = new LinearLayoutManager(getActivity());
         mLinearLayoutManager.setReverseLayout(true);
         mLinearLayoutManager.setStackFromEnd(true);
@@ -133,11 +130,11 @@ public class CommunityDetailFragment extends Fragment {
         mPostTextView = (TextView) view.findViewById(R.id.post_text);
         mPostDateTextView = (TextView) view.findViewById(R.id.post_date);
         mPostCommentsNumTextView = (TextView) view.findViewById(R.id.post_comment_num);
-        mFirebaseDatabaseReference = FirebaseLab.getFirebaseDatabaseReference();
-        mCommentsRef = FirebaseLab.getFirebaseDatabaseReference().child(FirebaseNodes.PostComment.POSTS_COM_CHILD);
-        mUsersRef = FirebaseLab.getFirebaseDatabaseReference().child(FirebaseNodes.User.USER_CHILD);
+        mFirebaseDatabaseReference = Firebase.getFirebaseDatabaseReference();
+        mCommentsRef = Firebase.getFirebaseDatabaseReference().child(FirebaseNodes.PostComment.POSTS_COM_CHILD);
+        mUsersRef = Firebase.getFirebaseDatabaseReference().child(FirebaseNodes.User.USER_CHILD);
 
-        mFirebaseUser = FirebaseLab.getFirebaseUser();
+        mFirebaseUser = Firebase.getFirebaseUser();
         mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD).child(mPostKey).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(final DataSnapshot dataSnapshot) {
@@ -148,7 +145,7 @@ public class CommunityDetailFragment extends Fragment {
                     public void onDataChange(final DataSnapshot snapshot) {
                         mUserNameTextView.setText(snapshot.child(dataSnapshot.child(FirebaseNodes.PostMain.USER_ID).getValue().toString()).child(FirebaseNodes.User.USER_NAME).getValue().toString());
                         //Display User picture
-                        StorageReference rootRef = FirebaseLab.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
+                        StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
                         rootRef.child(dataSnapshot.child(FirebaseNodes.PostMain.USER_ID).getValue().toString()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                             @Override
                             public void onSuccess(Uri uri) {
@@ -208,11 +205,11 @@ public class CommunityDetailFragment extends Fragment {
 
 
         //get user info
-        mFirebaseAuth = FirebaseLab.getFirebaseAuth();
-        mFirebaseUser = FirebaseLab.getFirebaseUser();
+        mFirebaseAuth = Firebase.getFirebaseAuth();
+        mFirebaseUser = Firebase.getFirebaseUser();
         //For Add a comment
         mMyIconImageView = (CircleImageView) view.findViewById(R.id.my_user_icon);
-        StorageReference rootRef = FirebaseLab.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
+        StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
         rootRef.child(mFirebaseUser.getUid()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
@@ -304,7 +301,7 @@ public class CommunityDetailFragment extends Fragment {
 
         @Override
         public CommentsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.com_detail_comment_item, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.detail_comment_item, parent, false);
             return new CommentsViewHolder(view);
         }
 
@@ -343,7 +340,7 @@ public class CommunityDetailFragment extends Fragment {
                 viewHolder.mCommentUserNameTextView.setText(mUser.getUserName());
 
                 //Display User picture
-                StorageReference rootRef = FirebaseLab.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
+                StorageReference rootRef = Firebase.getStorageReference().child(FirebaseNodes.UserPicture.USER_PIC_CHILD);
                 rootRef.child(mUser.getUserId()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {

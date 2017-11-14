@@ -9,7 +9,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
-import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -20,7 +19,7 @@ import android.widget.EditText;
 import com.example.aki.javaq.Domain.Entity.PostComment;
 import com.example.aki.javaq.Domain.Entity.PostMain;
 import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
-import com.example.aki.javaq.Domain.Usecase.FirebaseLab;
+import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.R;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
@@ -65,7 +64,7 @@ public class CommunityAddCommentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         mPostKey = intent.getStringExtra(POST_KEY);
-        setContentView(R.layout.com_post_activity);
+        setContentView(R.layout.add_post_activity);
 
         //Toolbar
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar_with_button);
@@ -76,15 +75,15 @@ public class CommunityAddCommentActivity extends AppCompatActivity {
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         //New Child entries
-        mFirebaseDatabaseReference = FirebaseLab.getFirebaseDatabaseReference();
-        mFirebaseAnalytics = FirebaseLab.getFirebaseAnalytics(this);
-        mFirebaseRemoteConfig = FirebaseLab.getFirebaseRemoteConfig();
-        FirebaseLab.SetConfig();
-        FirebaseLab.fetchConfig();
+        mFirebaseDatabaseReference = Firebase.getFirebaseDatabaseReference();
+        mFirebaseAnalytics = Firebase.getFirebaseAnalytics(this);
+        mFirebaseRemoteConfig = Firebase.getFirebaseRemoteConfig();
+        Firebase.SetConfig();
+        Firebase.fetchConfig();
 //        mPostCommentContentes.setPostId(mPostKey);
 
-        mFirebaseAuth = FirebaseLab.getFirebaseAuth();
-        mFirebaseUser = FirebaseLab.getFirebaseUser();
+        mFirebaseAuth = Firebase.getFirebaseAuth();
+        mFirebaseUser = Firebase.getFirebaseUser();
         mUsername = mFirebaseUser.getDisplayName();
         if (mFirebaseUser.getPhotoUrl() != null) {
             mPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
