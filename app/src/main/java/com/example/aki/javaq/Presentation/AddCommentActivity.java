@@ -1,4 +1,4 @@
-package com.example.aki.javaq.Presentation.Community;
+package com.example.aki.javaq.Presentation;
 
 import android.content.Context;
 import android.content.Intent;
@@ -34,7 +34,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
  * Created by MinaFujisawa on 2017/07/13.
  */
 
-public class CommunityAddCommentActivity extends AppCompatActivity {
+public class AddCommentActivity extends AppCompatActivity {
 
     private EditText mCommentEditTextView;
     private String mCommentText;
@@ -154,7 +154,7 @@ public class CommunityAddCommentActivity extends AppCompatActivity {
                 final DatabaseReference post_ref = mFirebaseDatabaseReference.child(FirebaseNodes.PostMain.POSTS_CHILD).child(mPostKey);
                 mCommentsNumInt++;
                 post_ref.child(FirebaseNodes.PostMain.COMMENTS_NUM).setValue(mCommentsNumInt);
-                Intent intent = CommunityDetailActivity.newIntent(this, mPostKey);
+                Intent intent = DetailActivity.newIntent(this, mPostKey);
                 startActivity(intent);
 
                 return true;

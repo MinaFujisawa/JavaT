@@ -23,10 +23,10 @@
         <activity android:name=".Presentation.Quiz.QuizResultActivity" android:screenOrientation="portrait"/>
         <activity android:name=".Presentation.Quiz.QuizActivity" android:screenOrientation="portrait"/>
         <activity android:name=".Presentation.Progress.ProgressActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Community.CommunityListActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Community.CommunityAddCommentActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Community.CommunityPostActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".Presentation.Community.CommunityDetailActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".Presentation.FeedListActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".Presentation.AddCommentActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".Presentation.AddPostActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".Presentation.DetailActivity" android:screenOrientation="portrait"/>
         <activity android:name=".Presentation.Setting.SettingListActivity" android:screenOrientation="portrait"/>
         <activity android:name=".Presentation.UserRegistrationActivity" android:screenOrientation="portrait"/>
     </application>

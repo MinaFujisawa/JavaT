@@ -33,7 +33,6 @@ import com.example.aki.javaq.Domain.Entity.User;
 import com.example.aki.javaq.Domain.Helper.FirebaseNodes;
 import com.example.aki.javaq.Domain.Usecase.Firebase;
 import com.example.aki.javaq.Domain.Helper.PictureUtils;
-import com.example.aki.javaq.Presentation.Community.CommunityListActivity;
 import com.example.aki.javaq.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -340,7 +339,7 @@ public class UserRegistrationActivity extends AppCompatActivity implements View.
 
 
                 //TODO:理想はコメントから来た人はdetailページからコメント入力画面に遷移
-                Intent intent = new Intent(this, CommunityListActivity.class);
+                Intent intent = new Intent(this, FeedListActivity.class);
                 startActivity(intent);
 
                 return true;

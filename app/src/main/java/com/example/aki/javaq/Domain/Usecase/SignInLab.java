@@ -7,7 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.aki.javaq.Presentation.Community.CommunityPostActivity;
+import com.example.aki.javaq.Presentation.AddPostActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -51,7 +51,7 @@ public class SignInLab extends AppCompatActivity {
                                     Toast.LENGTH_SHORT).show();
 
                         } else {
-                            activity.startActivity(new Intent(activity, CommunityPostActivity.class));
+                            activity.startActivity(new Intent(activity, AddPostActivity.class));
                             activity.finish();
 
                         }

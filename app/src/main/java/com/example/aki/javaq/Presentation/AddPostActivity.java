@@ -1,4 +1,4 @@
-package com.example.aki.javaq.Presentation.Community;
+package com.example.aki.javaq.Presentation;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,7 +28,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
  * Created by MinaFujisawa on 2017/07/13.
  */
 
-public class CommunityPostActivity extends AppCompatActivity {
+public class AddPostActivity extends AppCompatActivity {
 
     private MenuItem mPostButton;
     private boolean mTappable;
@@ -49,7 +49,7 @@ public class CommunityPostActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE = 2;
     public static final int DEFAULT_MSG_LENGTH_LIMIT = 30;
     private static final String LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif";
-    private static final String TAG = "CommunityPostActivity";
+    private static final String TAG = "AddPostActivity";
     private static final String POST_SENT_EVENT = "post_sent";
     private long mPostTime;
     private int mCommentNum;
@@ -137,7 +137,7 @@ public class CommunityPostActivity extends AppCompatActivity {
                 ref.child(key).setValue(post);
                 mFirebaseAnalytics.logEvent(POST_SENT_EVENT, null);
 
-                Intent intent = new Intent(CommunityPostActivity.this, CommunityListActivity.class);
+                Intent intent = new Intent(AddPostActivity.this, FeedListActivity.class);
                 startActivity(intent);
                 return true;
             case android.R.id.home:

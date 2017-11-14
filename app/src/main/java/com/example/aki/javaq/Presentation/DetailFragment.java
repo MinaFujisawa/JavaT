@@ -1,4 +1,4 @@
-package com.example.aki.javaq.Presentation.Community;
+package com.example.aki.javaq.Presentation;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -49,7 +49,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class CommunityDetailFragment extends Fragment {
+public class DetailFragment extends Fragment {
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private TextView mUserNameTextView;
     private CircleImageView mUserIconImageView;
@@ -83,10 +83,10 @@ public class CommunityDetailFragment extends Fragment {
     private static final String POST_SENT_EVENT = "post_sent";
     private String mCommentsNum;
 
-    public static CommunityDetailFragment newInstance(String postKey) {
+    public static DetailFragment newInstance(String postKey) {
         Bundle args = new Bundle();
         args.putString(ARG_POST_KEY, postKey);
-        CommunityDetailFragment fragment = new CommunityDetailFragment();
+        DetailFragment fragment = new DetailFragment();
         fragment.setArguments(args);
         return fragment;
     }
@@ -240,7 +240,7 @@ public class CommunityDetailFragment extends Fragment {
                 //TODO: ログイン済みかGET
                 boolean mLogined = true;
                 if (mLogined) {
-                    Intent intent = new Intent(getActivity().getApplicationContext(), CommunityAddCommentActivity.class);
+                    Intent intent = new Intent(getActivity().getApplicationContext(), AddCommentActivity.class);
                     intent.putExtra(POST_KEY, mPostKey);
                     startActivity(intent);
                 } else {
@@ -253,7 +253,7 @@ public class CommunityDetailFragment extends Fragment {
         });
 
         if (mCommentsAdapter == null) {
-            mCommentsAdapter = new CommunityDetailFragment.CommentsAdapter(mCommentsRef, mUsersRef);
+            mCommentsAdapter = new DetailFragment.CommentsAdapter(mCommentsRef, mUsersRef);
             mCommentsRecyclerView.setAdapter(mCommentsAdapter);
         }
 

@@ -1,4 +1,4 @@
-package com.example.aki.javaq.Presentation.Community;
+package com.example.aki.javaq.Presentation;
 
 
 import android.content.Intent;
@@ -13,7 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.aki.javaq.Domain.Usecase.SignInLab;
-import com.example.aki.javaq.Presentation.UserRegistrationActivity;
 import com.example.aki.javaq.R;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;

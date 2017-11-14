@@ -1,4 +1,4 @@
-package com.example.aki.javat.Domain.Entity;
+package com.example.aki.javaq.Domain.Entity;
 
 /**
  * Created by AKI on 2017-07-13.

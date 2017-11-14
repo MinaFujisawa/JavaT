@@ -1,4 +1,4 @@
-package com.example.aki.javaq.Presentation.Community;
+package com.example.aki.javaq.Presentation;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -45,9 +45,9 @@ import java.util.HashMap;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class CommunityListFragment extends Fragment {
+public class FeedFragment extends Fragment {
 
-    private static final String TAG = "CommunityListFragment";
+    private static final String TAG = "FeedFragment";
     private View view;
     private RecyclerView mComRecyclerView;
     private SharedPreferences mSharedPreferences;
@@ -131,7 +131,7 @@ public class CommunityListFragment extends Fragment {
                     dialog.show(manager, LOGIN_DIALOG);
 
                 } else {
-                    Intent intent = new Intent(getActivity(), CommunityPostActivity.class);
+                    Intent intent = new Intent(getActivity(), AddPostActivity.class);
                     startActivity(intent);
                 }
             }
@@ -271,7 +271,7 @@ public class CommunityListFragment extends Fragment {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = CommunityDetailActivity.newIntent(getActivity(), mPostMain.getPostId());
+                    Intent intent = DetailActivity.newIntent(getActivity(), mPostMain.getPostId());
                     startActivity(intent);
                 }
             });
