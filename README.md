@@ -1,2 +1,2 @@
-# JavaQ
-This is an Android Java quiz and community app for Java learners
+# Detail
+http://mina-fujisawa.com/projects/javaT/
